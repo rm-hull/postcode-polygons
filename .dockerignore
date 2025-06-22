@@ -2,6 +2,7 @@
 .vscode
 data/
 !data/postcodes
+!data/codepo_gb.zip
 LICENSE.md
 README.md
 ATTRIBUTION.md
