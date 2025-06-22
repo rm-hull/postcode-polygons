@@ -1,6 +1,7 @@
 .github
 .vscode
 data/
+!data/postcodes
 LICENSE.md
 README.md
 ATTRIBUTION.md
