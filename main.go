@@ -35,7 +35,7 @@ func main() {
 	rootCmd.Flags().IntVar(&port, "port", 8080, "Port to run HTTP server on")
 
 	if err = rootCmd.Execute(); err != nil {
-		panic(err)
+		log.Fatalf("failed to execute root command: %v", err)
 	}
 }
 

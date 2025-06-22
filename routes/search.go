@@ -56,6 +56,10 @@ func parseBBox(bboxStr string) ([]uint32, error) {
 		bbox[i] = uint32(val)
 	}
 
+	if bbox[0] > bbox[2] || bbox[1] > bbox[3] {
+		return nil, fmt.Errorf("invalid bbox: min values must be less than or equal to max values")
+	}
+	
 	if math.Abs(float64(bbox[2]-bbox[0])) > MAX_BOUNDS || math.Abs(float64(bbox[3]-bbox[1])) > MAX_BOUNDS {
 		return nil, fmt.Errorf("bbox must define a valid area (no more than %d KM in either dimension)", MAX_BOUNDS/1000)
 	}

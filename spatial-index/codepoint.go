@@ -106,22 +106,20 @@ func (idx *SpatialIndex) processCSV(f *zip.File) error {
 	return nil
 }
 
-func fromCodePointCSV(record []string, headers []string) (CodePoint, error) {
+func fromCodePointCSV(record []string, headers []string) (*CodePoint, error) {
 
-	easting := parseInt(record[2])
-	northing := parseInt(record[3])
-
-	return CodePoint{
-		PostCode: record[0],
-		Easting:  easting,
-		Northing: northing,
-	}, nil
-}
-
-func parseInt(s string) uint32 {
-	n, err := strconv.Atoi(s)
+	easting, err := strconv.ParseUint(record[2], 10, 32)
 	if err != nil {
-		return 0
+		return nil, fmt.Errorf("invalid easting value: %w", err)
 	}
-	return uint32(n)
+	northing, err := strconv.ParseUint(record[3], 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("invalid northing value: %w", err)
+	}
+
+	return &CodePoint{
+		PostCode: record[0],
+		Easting:  uint32(easting),
+		Northing: uint32(northing),
+	}, nil
 }
