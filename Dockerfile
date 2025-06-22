@@ -27,6 +27,7 @@ RUN apk --no-cache add curl ca-certificates tzdata && \
 RUN adduser -D -g '' appuser
 WORKDIR /app
 
+COPY ./data/codepo_gb.zip /app/data/codepo_gb.zip
 COPY ./data/postcodes /app/data/postcodes
 COPY --from=build /app/postcode-polygons .
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
