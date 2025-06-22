@@ -40,6 +40,9 @@ func Extract(tarFile string) {
 	for {
 		header, err := tarReader.Next()
 		if err != nil {
+			if err != io.EOF {
+				log.Printf("Error reading from tar archive: %v", err)
+			}
 			break
 		}
 
@@ -68,12 +71,11 @@ func Extract(tarFile string) {
 				log.Fatalf("Error compressing file %s: %v", outputFile, err)
 			}
 
-			log.Printf("Processed %s: original size %s -> %s (%0.2f%% reduction)\n",
+			log.Printf("Processed file %s: original size %s -> %s (%0.2f%% reduction)\n",
 				successful(filename),
 				humanize.Bytes(uint64(header.Size)),
 				humanize.Bytes(uint64(newSize)),
 				100-float64(newSize)/float64(header.Size)*100)
-
 
 		} else {
 			log.Printf("Skipping: %v\n", skipped(header.Name))
@@ -96,18 +98,13 @@ func compressFile(filename string, content []byte) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("error creating bzip2 writer: %w", err)
 	}
-	defer func() {
-		if err := w.Close(); err != nil {
-			log.Printf("Error closing bzip2 writer for file %s: %v", filename, err)
-		}
-	}()
 
 	_, err = w.Write(content)
 	if err != nil {
 		return 0, fmt.Errorf("error writing bzip2 file: %w", err)
 	}
 
-	err = w.Close()
+	err = w.Close() // Ensure to close the writer to flush the data, so that the output offset is correct
 	if err != nil {
 		return 0, fmt.Errorf("error closing bzip2 writer: %w", err)
 	}

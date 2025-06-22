@@ -1,7 +1,7 @@
 FROM golang:1.24-alpine AS build
 
 RUN apk update && \
-    apk add --no-cache ca-certificates tzdata git build-base && \
+    apk add --no-cache ca-certificates tzdata git && \
     update-ca-certificates
 
 RUN adduser -D -g '' appuser
@@ -13,7 +13,6 @@ RUN go mod download
 
 COPY . .
 
-ENV CGO_ENABLED=1
 ENV GOOS=linux
 
 RUN go build -ldflags="-w -s" -o postcode-polygons .
