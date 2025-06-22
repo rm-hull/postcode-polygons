@@ -12,27 +12,6 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 4
 
-# Python-specific settings
-[*.{py,pyw}]
-# Conform to PEP 8 recommendations
-indent_style = space
-indent_size = 4
-max_line_length = 120
-
-# Docstring settings
-[*.{py,pyw}]
-# Ensure consistent docstring formatting
-max_line_length = 72
-
-# Test files may have different conventions
-[test_*.py]
-max_line_length = 120
-
-# Configuration and requirement files
-[{pyproject.toml,setup.cfg,requirements*.txt}]
-indent_style = space
-indent_size = 2
-
 # YAML files often use 2-space indentation
 [*.{yaml,yml}]
 indent_style = space
@@ -45,11 +24,6 @@ indent_size = 2
 # Makefiles require tabs
 [Makefile]
 indent_style = tab
-
-# Ignore certain file types or paths
-[{*.min.py,__pycache__/**}]
-insert_final_newline = false
-trim_trailing_whitespace = false
 
 [*.go]
 indent_style = tab
