@@ -119,7 +119,10 @@ func reprocessFile(content []byte) ([]byte, error) {
 	}
 
 	for _, feature := range fc.Features {
-		postcode := feature.Properties["postcodes"].(string)
+		postcode, ok := feature.Properties["postcodes"].(string)
+		if !ok {
+			return nil, fmt.Errorf("missing or invalid 'postcodes' property in feature %s", feature.ID)
+		}
 
 		truncateCoordinates(feature)
 		delete(feature.Properties, "mapit_code")
