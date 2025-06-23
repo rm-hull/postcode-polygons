@@ -21,15 +21,9 @@ type SpatialIndex struct {
 }
 
 func (idx *SpatialIndex) Search(bounds []uint32) (*[]CodePoint, error) {
-	if len(bounds) != 4 {
-		return nil, fmt.Errorf("search bounds must contain exactly 4 values: min_easting, min_northing, max_easting, max_northing")
-	}
-
-	sw := [2]uint32{bounds[0], bounds[1]} // South-West corner
-	ne := [2]uint32{bounds[2], bounds[3]} // North-East corner
 
 	results := make([]CodePoint, 0, 100)
-	idx.tree.Search(sw, ne, func(min, max [2]uint32, data string) bool {
+	err := idx.SearchIter(bounds, func(min, max [2]uint32, data string) bool {
 		results = append(results, CodePoint{
 			PostCode: data,
 			Easting:  min[0],
@@ -38,7 +32,23 @@ func (idx *SpatialIndex) Search(bounds []uint32) (*[]CodePoint, error) {
 		return true
 	})
 
+	if err != nil {
+		return nil, fmt.Errorf("error during spatial search: %w", err)
+	}
+
 	return &results, nil
+}
+
+func (idx *SpatialIndex) SearchIter(bounds []uint32, iter func(min, max [2]uint32, data string) bool) error {
+	if len(bounds) != 4 {
+		return fmt.Errorf("search bounds must contain exactly 4 values: min_easting, min_northing, max_easting, max_northing")
+	}
+
+	sw := [2]uint32{bounds[0], bounds[1]} // South-West corner
+	ne := [2]uint32{bounds[2], bounds[3]} // North-East corner
+
+	idx.tree.Search(sw, ne, iter)
+	return nil
 }
 
 func NewCodePointSpatialIndex(zipFile string) (*SpatialIndex, error) {
