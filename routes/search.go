@@ -88,10 +88,10 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 					}
 				}
 			}
-
-			c.Header("Content-Type", "application/geo+json")
-			c.JSON(http.StatusOK, &fc)
 		}
+
+		c.Header("Content-Type", "application/geo+json")
+		c.JSON(http.StatusOK, &fc)
 	}
 }
 
