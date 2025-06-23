@@ -68,8 +68,8 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 			return
 		}
-		var fc geojson.FeatureCollection
 
+		var fc geojson.FeatureCollection
 		for district := range districts {
 			featureCollection, err := loadFromFile(fmt.Sprintf("./data/postcodes/%s.geojson.bz2", district))
 			if err != nil {
@@ -90,7 +90,7 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 			}
 
 			c.Header("Content-Type", "application/geo+json")
-			c.JSON(http.StatusOK, fc)
+			c.JSON(http.StatusOK, &fc)
 		}
 	}
 }
