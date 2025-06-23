@@ -69,6 +69,18 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 			return
 		}
 
+		isRequestedPostcode := func(feature *geojson.Feature, requestedPostcodes map[string]struct{}) bool {
+			// if feature.Properties == nil {
+			// 	return false
+			// }
+			postcode, ok := feature.Properties["postcode"].(string)
+			if !ok {
+				return false
+			}
+			_, exists := requestedPostcodes[postcode]
+			return exists
+		}
+
 		var fc geojson.FeatureCollection
 		for district := range districts {
 			featureCollection, err := loadFromFile(fmt.Sprintf("./data/postcodes/%s.geojson.bz2", district))
@@ -78,14 +90,8 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 				return
 			}
 			for _, feature := range featureCollection.Features {
-				if feature.Properties != nil {
-					if v, ok := feature.Properties["postcode"]; ok {
-						if postCode, ok := v.(string); ok {
-							if _, exists := requestedPostcodes[postCode]; exists {
-								fc.Append(feature)
-							}
-						}
-					}
+				if isRequestedPostcode(feature, requestedPostcodes) {
+					fc.Append(feature)
 				}
 			}
 		}
