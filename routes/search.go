@@ -13,7 +13,6 @@ import (
 	"os"
 
 	"github.com/dsnet/compress/bzip2"
-
 	"github.com/gin-gonic/gin"
 	"github.com/paulmach/orb/geojson"
 )
