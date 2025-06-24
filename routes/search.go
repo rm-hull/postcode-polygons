@@ -24,8 +24,6 @@ type SearchResponse struct {
 
 const MAX_BOUNDS = 5000 // Maximum bounds in meters (5 KM)
 
-var c = jsoniter.Config{EscapeHTML: true, SortMapKeys: false, MarshalFloatWith6Digits: true}.Froze()
-
 func CodePointSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		bbox, err := parseBBox(c.Query("bbox"))
@@ -107,6 +105,7 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 
 func loadFromFile(bz2filename string) (*geojson.FeatureCollection, error) {
 
+
 	file, err := os.Open(bz2filename)
 	if err != nil {
 		return nil, err
@@ -121,9 +120,13 @@ func loadFromFile(bz2filename string) (*geojson.FeatureCollection, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating bzip2 reader: %w", err)
 	}
-	fc := geojson.NewFeatureCollection()
+	c := jsoniter.Config{EscapeHTML: true, SortMapKeys: false, MarshalFloatWith6Digits: true}.Froze()
+	geojson.CustomJSONMarshaler = c
+	geojson.CustomJSONUnmarshaler = c
 	decoder := c.NewDecoder(bz2Reader)
-	if err := decoder.Decode(&fc); err != nil {
+
+	fc := geojson.NewFeatureCollection()
+	if err := decoder.Decode(fc); err != nil {
 		return nil, err
 	}
 	return fc, nil
