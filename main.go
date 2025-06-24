@@ -35,7 +35,7 @@ func main() {
 
 	rootCmd.Flags().StringVar(&zipFile, "codepoint", "./data/codepo_gb.zip", "Path to CodePoint Open zip file")
 	rootCmd.Flags().IntVar(&port, "port", 8080, "Port to run HTTP server on")
-	rootCmd.Flags().BoolVar(&debug, "debug", false, "Enable debugging (pprof)")
+	rootCmd.Flags().BoolVar(&debug, "debug", false, "Enable debugging (pprof) - WARING: do not enable in production")
 
 	if err = rootCmd.Execute(); err != nil {
 		log.Fatalf("failed to execute root command: %v", err)
@@ -74,7 +74,7 @@ func server(zipFile string, port int, debug bool) {
 	)
 
 	if debug {
-		log.Println("Debug mode enabled: pprof endpoints will be available")
+		log.Println("WARNING: pprof endpoints are enabled and exposed. Do not run with this flag in production.")
 		pprof.Register(r)
 	}
 
