@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	"encoding/json"
 	"os"
 
 	"github.com/dsnet/compress/bzip2"
 	"github.com/gin-gonic/gin"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/paulmach/orb/geojson"
 )
 
@@ -23,6 +23,8 @@ type SearchResponse struct {
 }
 
 const MAX_BOUNDS = 5000 // Maximum bounds in meters (5 KM)
+
+var c = jsoniter.Config{EscapeHTML: true, SortMapKeys: false, MarshalFloatWith6Digits: true}.Froze()
 
 func CodePointSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context) {
 	return func(c *gin.Context) {
@@ -54,8 +56,8 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 			return
 		}
 
-		requestedPostcodes := make(map[string]struct{})
-		districts := make(map[string]struct{})
+		requestedPostcodes := make(map[string]struct{}, 100)
+		districts := make(map[string]struct{}, 20)
 
 		err = spatialIndex.SearchIter(bbox, func(min, max [2]uint32, postcode string) bool {
 			district := strings.Split(postcode, " ")[0] // Take the first part of the postcode
@@ -81,7 +83,9 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 			return exists
 		}
 
-		var fc geojson.FeatureCollection
+		fc := geojson.NewFeatureCollection()
+		fc.Features = make([]*geojson.Feature, 0, len(requestedPostcodes))
+
 		for district := range districts {
 			featureCollection, err := loadFromFile(fmt.Sprintf("./data/postcodes/%s.geojson.bz2", district))
 			if err != nil {
@@ -117,12 +121,12 @@ func loadFromFile(bz2filename string) (*geojson.FeatureCollection, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating bzip2 reader: %w", err)
 	}
-	var fc geojson.FeatureCollection
-	decoder := json.NewDecoder(bz2Reader)
+	fc := geojson.NewFeatureCollection()
+	decoder := c.NewDecoder(bz2Reader)
 	if err := decoder.Decode(&fc); err != nil {
 		return nil, err
 	}
-	return &fc, nil
+	return fc, nil
 }
 
 func parseBBox(bboxStr string) ([]uint32, error) {

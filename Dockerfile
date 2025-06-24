@@ -15,7 +15,7 @@ COPY . .
 
 ENV GOOS=linux
 
-RUN go build -ldflags="-w -s" -o postcode-polygons .
+RUN go build -tags=jsoniter -ldflags="-w -s" -o postcode-polygons .
 
 FROM alpine:latest AS runtime
 ENV GIN_MODE=release
