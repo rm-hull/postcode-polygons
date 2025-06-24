@@ -10,6 +10,7 @@ import (
 	"github.com/Depado/ginprom"
 	"github.com/aurowora/compress"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	healthcheck "github.com/tavsec/gin-healthcheck"
@@ -22,24 +23,26 @@ func main() {
 	var err error
 	var zipFile string
 	var port int
+	var debug bool
 
 	rootCmd := &cobra.Command{
 		Use:   "http",
 		Short: "Postcode Polygons API server",
 		Run: func(cmd *cobra.Command, args []string) {
-			server(zipFile, port)
+			server(zipFile, port, debug)
 		},
 	}
 
 	rootCmd.Flags().StringVar(&zipFile, "codepoint", "./data/codepo_gb.zip", "Path to CodePoint Open zip file")
 	rootCmd.Flags().IntVar(&port, "port", 8080, "Port to run HTTP server on")
+	rootCmd.Flags().BoolVar(&debug, "debug", false, "Enable debugging (pprof)")
 
 	if err = rootCmd.Execute(); err != nil {
 		log.Fatalf("failed to execute root command: %v", err)
 	}
 }
 
-func server(zipFile string, port int) {
+func server(zipFile string, port int, debug bool) {
 	if _, err := os.Stat(zipFile); os.IsNotExist(err) {
 		log.Fatalf("CodePoint zip file does not exist: %s", zipFile)
 	}
@@ -69,6 +72,11 @@ func server(zipFile string, port int) {
 		cachecontrol.New(cachecontrol.CacheAssetsForeverPreset),
 		cors.Default(),
 	)
+
+	if debug {
+		log.Println("Debug mode enabled: pprof endpoints will be available")
+		pprof.Register(r)
+	}
 
 	err = healthcheck.New(r, hc_config.DefaultConfig(), []checks.Check{})
 	if err != nil {
