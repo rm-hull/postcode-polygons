@@ -17,9 +17,9 @@ import (
 	"github.com/paulmach/orb/geojson"
 )
 
-func ExtractData(tarFile string) {
+func ExtractData(tarBz2File string) {
 
-	f, err := os.Open(tarFile)
+	f, err := os.Open(tarBz2File)
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
