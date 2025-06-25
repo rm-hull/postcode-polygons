@@ -1,4 +1,4 @@
-package extraction
+package cmd
 
 import (
 	"archive/tar"
@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"postcode-polygons/internal"
 	"strings"
 
 	"github.com/dsnet/compress/bzip2"
@@ -16,9 +17,9 @@ import (
 	"github.com/paulmach/orb/geojson"
 )
 
-func Extract(tarFile string) {
+func ExtractData(tarBz2File string) {
 
-	f, err := os.Open(tarFile)
+	f, err := os.Open(tarBz2File)
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
@@ -60,13 +61,18 @@ func Extract(tarFile string) {
 				log.Fatalf("Error reading file %s: %v", header.Name, err)
 			}
 
-			processed, err := reprocessFile(content)
+			fc, err := geojson.UnmarshalFeatureCollection(content)
 			if err != nil {
-				log.Fatalf("Error processing file %s: %v", header.Name, err)
+				log.Fatalf("Error unmarshalling GeoJSON: %v", err)
 			}
 
-			outputFile := "./data/postcodes/" + filename + ".bz2"
-			newSize, err := compressFile(outputFile, processed)
+			err = reprocessFeatureCollection(fc)
+			if err != nil {
+				log.Fatalf("Error reprocessing feature collection for file %s: %v", header.Name, err)
+			}
+
+			outputFile := fmt.Sprintf("./data/postcodes/%s.bz2", filename)
+			newSize, err := internal.CompressFeatureCollection(outputFile, fc)
 			if err != nil {
 				log.Fatalf("Error compressing file %s: %v", outputFile, err)
 			}
@@ -83,45 +89,12 @@ func Extract(tarFile string) {
 	}
 }
 
-func compressFile(filename string, content []byte) (int, error) {
-	f, err := os.Create(filename)
-	if err != nil {
-		return 0, fmt.Errorf("error creating output file: %w", err)
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Printf("Error closing file %s: %v", filename, err)
-		}
-	}()
-
-	w, err := bzip2.NewWriter(f, &bzip2.WriterConfig{Level: bzip2.BestCompression})
-	if err != nil {
-		return 0, fmt.Errorf("error creating bzip2 writer: %w", err)
-	}
-
-	_, err = w.Write(content)
-	if err != nil {
-		return 0, fmt.Errorf("error writing bzip2 file: %w", err)
-	}
-
-	err = w.Close() // Ensure to close the writer to flush the data, so that the output offset is correct
-	if err != nil {
-		return 0, fmt.Errorf("error closing bzip2 writer: %w", err)
-	}
-
-	return int(w.OutputOffset), nil
-}
-
-func reprocessFile(content []byte) ([]byte, error) {
-	fc, err := geojson.UnmarshalFeatureCollection(content)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling GeoJSON: %w", err)
-	}
+func reprocessFeatureCollection(fc *geojson.FeatureCollection) error {
 
 	for _, feature := range fc.Features {
 		postcode, ok := feature.Properties["postcodes"].(string)
 		if !ok {
-			return nil, fmt.Errorf("missing or invalid 'postcodes' property in feature %s", feature.ID)
+			return fmt.Errorf("missing or invalid 'postcodes' property in feature %s", feature.ID)
 		}
 
 		truncateCoordinates(feature)
@@ -130,7 +103,7 @@ func reprocessFile(content []byte) ([]byte, error) {
 		feature.Properties["postcode"] = postcode
 	}
 
-	return fc.MarshalJSON()
+	return nil
 }
 
 func truncateCoordinates(feature *geojson.Feature) {
