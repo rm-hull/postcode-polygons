@@ -69,10 +69,7 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 			return
 		}
 
-		isRequestedPostcode := func(feature *geojson.Feature, requestedPostcodes map[string]struct{}) bool {
-			// if feature.Properties == nil {
-			// 	return false
-			// }
+		isRequestedPostcode := func(feature *geojson.Feature) bool {
 			postcode, ok := feature.Properties["postcode"].(string)
 			if !ok {
 				return false
@@ -86,13 +83,17 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 
 		for district := range districts {
 			featureCollection, err := loadFromFile(fmt.Sprintf("./data/postcodes/%s.geojson.bz2", district))
+			if err != nil && os.IsNotExist(err) {
+				log.Printf("polygon file for district %s does not exist, skipping", district)
+				continue
+			}
 			if err != nil {
 				log.Printf("error loading polygon for district %s: %v", district, err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 				return
 			}
 			for _, feature := range featureCollection.Features {
-				if isRequestedPostcode(feature, requestedPostcodes) {
+				if isRequestedPostcode(feature) {
 					fc.Append(feature)
 				}
 			}
@@ -104,7 +105,6 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 }
 
 func loadFromFile(bz2filename string) (*geojson.FeatureCollection, error) {
-
 
 	file, err := os.Open(bz2filename)
 	if err != nil {
