@@ -37,7 +37,7 @@ func main() {
 			cmd.ExtractData(polygonTarBz2File)
 		},
 	}
-	extractDataCmd.Flags().StringVar(&polygonTarBz2File, "polygon", "./data/gb-postcodes-v5.tar.bz2", "Path to NSUL polygons tar.gz file")
+	extractDataCmd.Flags().StringVar(&polygonTarBz2File, "polygon", "./data/gb-postcodes-v5.tar.bz2", "Path to NSUL polygons tar.bz2 file")
 
 	rootCmd.AddCommand(apiServerCmd)
 	rootCmd.AddCommand(extractDataCmd)

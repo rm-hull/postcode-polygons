@@ -12,6 +12,11 @@ import (
 
 var c = jsoniter.Config{EscapeHTML: true, SortMapKeys: true, MarshalFloatWith6Digits: true}.Froze()
 
+func init() {
+	geojson.CustomJSONMarshaler = c
+	geojson.CustomJSONUnmarshaler = c
+}
+
 func CompressFeatureCollection(bz2filename string, fc *geojson.FeatureCollection) (int, error) {
 	f, err := os.Create(bz2filename)
 	if err != nil {
@@ -28,8 +33,6 @@ func CompressFeatureCollection(bz2filename string, fc *geojson.FeatureCollection
 		return 0, fmt.Errorf("error creating bzip2 writer: %w", err)
 	}
 
-	geojson.CustomJSONMarshaler = c
-	geojson.CustomJSONUnmarshaler = c
 	if err := c.NewEncoder(w).Encode(fc); err != nil {
 		return 0, fmt.Errorf("error writing bzip2 file: %w", err)
 	}
@@ -58,8 +61,7 @@ func DecompressFeatureCollection(bz2filename string) (*geojson.FeatureCollection
 	if err != nil {
 		return nil, fmt.Errorf("error creating bzip2 reader: %w", err)
 	}
-	geojson.CustomJSONMarshaler = c
-	geojson.CustomJSONUnmarshaler = c
+
 	fc := geojson.NewFeatureCollection()
 	if err := c.NewDecoder(r).Decode(fc); err != nil {
 		return nil, err
