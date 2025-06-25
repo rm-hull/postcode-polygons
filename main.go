@@ -58,8 +58,6 @@ func server(zipFile string, port int, debug bool) {
 
 	prometheus := ginprom.New(
 		ginprom.Engine(r),
-		ginprom.Namespace("postcode_polygons"),
-		ginprom.Subsystem("api"),
 		ginprom.Path("/metrics"),
 		ginprom.Ignore("/healthz"),
 	)
