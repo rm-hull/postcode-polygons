@@ -83,7 +83,8 @@ func server(zipFile string, port int, debug bool) {
 		log.Fatalf("failed to initialize healthcheck: %v", err)
 	}
 
-	r.GET("/v1/postcode/codepoint", routes.CodePointSearch(spatialIndex))
+	r.GET("/v1/postcode/codepoints", routes.CodePointSearch(spatialIndex))
+	r.GET("/v1/postcode/polygons", routes.PolygonSearch(spatialIndex))
 
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Starting HTTP API Server on port %d...", port)
