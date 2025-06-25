@@ -5,15 +5,14 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"postcode-polygons/internal"
 	spatialindex "postcode-polygons/spatial-index"
 	"strconv"
 	"strings"
 
 	"os"
 
-	"github.com/dsnet/compress/bzip2"
 	"github.com/gin-gonic/gin"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/paulmach/orb/geojson"
 )
 
@@ -82,7 +81,8 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 		fc.Features = make([]*geojson.Feature, 0, len(requestedPostcodes))
 
 		for district := range districts {
-			featureCollection, err := loadFromFile(fmt.Sprintf("./data/postcodes/%s.geojson.bz2", district))
+			filename := fmt.Sprintf("./data/postcodes/%s.geojson.bz2", district)
+			featureCollection, err := internal.DecompressFeatureCollection(filename)
 			if err != nil && os.IsNotExist(err) {
 				log.Printf("polygon file for district %s does not exist, skipping", district)
 				continue
@@ -102,34 +102,6 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 		c.Header("Content-Type", "application/geo+json")
 		c.JSON(http.StatusOK, &fc)
 	}
-}
-
-func loadFromFile(bz2filename string) (*geojson.FeatureCollection, error) {
-
-	file, err := os.Open(bz2filename)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Printf("Error closing file %s: %v", bz2filename, err)
-		}
-	}()
-
-	bz2Reader, err := bzip2.NewReader(file, &bzip2.ReaderConfig{})
-	if err != nil {
-		return nil, fmt.Errorf("error creating bzip2 reader: %w", err)
-	}
-	c := jsoniter.Config{EscapeHTML: true, SortMapKeys: false, MarshalFloatWith6Digits: true}.Froze()
-	geojson.CustomJSONMarshaler = c
-	geojson.CustomJSONUnmarshaler = c
-	decoder := c.NewDecoder(bz2Reader)
-
-	fc := geojson.NewFeatureCollection()
-	if err := decoder.Decode(fc); err != nil {
-		return nil, err
-	}
-	return fc, nil
 }
 
 func parseBBox(bboxStr string) ([]uint32, error) {
