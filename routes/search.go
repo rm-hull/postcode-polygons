@@ -31,6 +31,11 @@ func CodePointSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Contex
 			return
 		}
 
+		if isTooBig(bbox) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "bbox is too large, must be less than 5km in width and height"})
+			return
+		}
+
 		results, err := spatialIndex.Search(bbox)
 		if err != nil {
 			log.Printf("error while fetching postcode data: %v", err)
@@ -53,13 +58,20 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 			return
 		}
 
-		requestedPostcodes := make(map[string]struct{}, 100)
+		tooBig := isTooBig(bbox)
+		target := map[bool]string{true: "districts", false: "units"}[tooBig]
+
+		requested := make(map[string]struct{}, 100)
 		districts := make(map[string]struct{}, 20)
 
 		err = spatialIndex.SearchIter(bbox, func(min, max [2]uint32, postcode string) bool {
 			district := strings.Split(postcode, " ")[0] // Take the first part of the postcode
 			districts[district] = struct{}{}
-			requestedPostcodes[postcode] = struct{}{}
+			if tooBig {
+				requested[district] = struct{}{}
+			} else {
+				requested[postcode] = struct{}{}
+			}
 			return true
 		})
 		if err != nil {
@@ -68,32 +80,23 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 			return
 		}
 
-		isRequestedPostcode := func(feature *geojson.Feature) bool {
-			postcode, ok := feature.Properties["postcode"].(string)
-			if !ok {
-				return false
-			}
-			_, exists := requestedPostcodes[postcode]
-			return exists
-		}
-
 		fc := geojson.NewFeatureCollection()
-		fc.Features = make([]*geojson.Feature, 0, len(requestedPostcodes))
+		fc.Features = make([]*geojson.Feature, 0, len(requested))
 
 		for district := range districts {
-			filename := fmt.Sprintf("./data/postcodes/units/%s.geojson.bz2", district)
+			filename := fmt.Sprintf("./data/postcodes/%s/%s.geojson.bz2", target, district)
 			featureCollection, err := internal.DecompressFeatureCollection(filename)
 			if err != nil && os.IsNotExist(err) {
-				log.Printf("polygon file for district %s does not exist, skipping", district)
+				log.Printf("polygon file %s does not exist, skipping", filename)
 				continue
 			}
 			if err != nil {
-				log.Printf("error loading polygon for district %s: %v", district, err)
+				log.Printf("error loading feature collection from file %s: %v", filename, err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 				return
 			}
 			for _, feature := range featureCollection.Features {
-				if isRequestedPostcode(feature) {
+				if _, exists := requested[feature.ID.(string)]; exists {
 					fc.Append(feature)
 				}
 			}
@@ -123,9 +126,9 @@ func parseBBox(bboxStr string) ([]uint32, error) {
 		return nil, fmt.Errorf("invalid bbox: min values must be less than or equal to max values")
 	}
 
-	if math.Abs(float64(bbox[2]-bbox[0])) > MAX_BOUNDS || math.Abs(float64(bbox[3]-bbox[1])) > MAX_BOUNDS {
-		return nil, fmt.Errorf("bbox must define a valid area (no more than %d KM in either dimension)", MAX_BOUNDS/1000)
-	}
-
 	return bbox, nil
+}
+
+func isTooBig(bbox []uint32) bool {
+	return math.Abs(float64(bbox[2]-bbox[0])) > MAX_BOUNDS || math.Abs(float64(bbox[3]-bbox[1])) > MAX_BOUNDS
 }
