@@ -81,7 +81,7 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 		fc.Features = make([]*geojson.Feature, 0, len(requestedPostcodes))
 
 		for district := range districts {
-			filename := fmt.Sprintf("./data/postcodes/%s.geojson.bz2", district)
+			filename := fmt.Sprintf("./data/postcodes/units/%s.geojson.bz2", district)
 			featureCollection, err := internal.DecompressFeatureCollection(filename)
 			if err != nil && os.IsNotExist(err) {
 				log.Printf("polygon file for district %s does not exist, skipping", district)
