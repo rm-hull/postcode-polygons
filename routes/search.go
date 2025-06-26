@@ -13,6 +13,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kofalt/go-memoize"
 	"github.com/paulmach/orb/geojson"
 )
 
@@ -50,7 +51,7 @@ func CodePointSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Contex
 	}
 }
 
-func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context) {
+func PolygonSearch(spatialIndex *spatialindex.SpatialIndex, cache *memoize.Memoizer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		bbox, err := parseBBox(c.Query("bbox"))
 		if err != nil {
@@ -85,7 +86,9 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context)
 
 		for district := range districts {
 			filename := fmt.Sprintf("./data/postcodes/%s/%s.geojson.bz2", target, district)
-			featureCollection, err := internal.DecompressFeatureCollection(filename)
+			featureCollection, err, _ := memoize.Call(cache, filename, func() (*geojson.FeatureCollection, error) {
+				return internal.DecompressFeatureCollection(filename)
+			})
 			if err != nil && os.IsNotExist(err) {
 				log.Printf("polygon file %s does not exist, skipping", filename)
 				continue
