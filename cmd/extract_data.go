@@ -38,8 +38,14 @@ func ExtractData(tarBz2File string) {
 	skipped := color.New(color.FgBlue).SprintFunc()
 	successful := color.New(color.FgGreen).SprintFunc()
 
-	os.MkdirAll("./data/postcodes/units", os.ModePerm)
-	os.MkdirAll("./data/postcodes/districts", os.ModePerm)
+	err = os.MkdirAll("./data/postcodes/units", os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error creating directory for units: %v", err)
+	}
+	err = os.MkdirAll("./data/postcodes/districts", os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error creating directory for districts: %v", err)
+	}
 
 	for {
 		header, err := tarReader.Next()
