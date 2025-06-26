@@ -115,7 +115,7 @@ func reprocessFeatureCollection(fileType string, propName string, fc *geojson.Fe
 	for _, feature := range fc.Features {
 		id, ok := feature.Properties[propName].(string)
 		if !ok {
-			return fmt.Errorf("missing or invalid '%s' property in feature", propName)
+			return fmt.Errorf("missing or invalid '%s' property for postcode %s: %s", propName, fileType, id)
 		}
 
 		feature.ID = id
