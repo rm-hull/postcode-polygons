@@ -71,7 +71,7 @@ func ExtractData(tarBz2File string) {
 				log.Fatalf("Error reprocessing feature collection for file %s: %v", header.Name, err)
 			}
 
-			outputFile := fmt.Sprintf("./data/postcodes/%s.bz2", filename)
+			outputFile := fmt.Sprintf("./data/postcodes/units/%s.bz2", filename)
 			newSize, err := internal.CompressFeatureCollection(outputFile, fc)
 			if err != nil {
 				log.Fatalf("Error compressing file %s: %v", outputFile, err)
