@@ -38,6 +38,15 @@ func ExtractData(tarBz2File string) {
 	skipped := color.New(color.FgBlue).SprintFunc()
 	successful := color.New(color.FgGreen).SprintFunc()
 
+	err = os.MkdirAll("./data/postcodes/units", os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error creating directory for units: %v", err)
+	}
+	err = os.MkdirAll("./data/postcodes/districts", os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error creating directory for districts: %v", err)
+	}
+
 	for {
 		header, err := tarReader.Next()
 		if err != nil {
@@ -47,11 +56,12 @@ func ExtractData(tarBz2File string) {
 			break
 		}
 
-		if header.Typeflag == tar.TypeReg && strings.HasPrefix(header.Name, "gb-postcodes-v5/units/") {
+		fileType, propName := extractFileType(header)
+		if fileType != "" {
 
-			filename := filepath.Base(header.Name)
-			if exists, err := os.Stat("./data/postcodes/" + filename + ".bz2"); err == nil && !exists.IsDir() {
-				log.Printf("Skipping file %s (already exists)", skipped(filename))
+			outputFile := fmt.Sprintf("./data/postcodes/%ss/%s.bz2", fileType, filepath.Base(header.Name))
+			if exists, err := os.Stat(outputFile); err == nil && !exists.IsDir() {
+				log.Printf("Skipping file %s (already exists)", skipped(outputFile))
 				continue
 			}
 
@@ -66,19 +76,18 @@ func ExtractData(tarBz2File string) {
 				log.Fatalf("Error unmarshalling GeoJSON: %v", err)
 			}
 
-			err = reprocessFeatureCollection(fc)
+			err = reprocessFeatureCollection(fileType, propName, fc)
 			if err != nil {
 				log.Fatalf("Error reprocessing feature collection for file %s: %v", header.Name, err)
 			}
 
-			outputFile := fmt.Sprintf("./data/postcodes/units/%s.bz2", filename)
 			newSize, err := internal.CompressFeatureCollection(outputFile, fc)
 			if err != nil {
 				log.Fatalf("Error compressing file %s: %v", outputFile, err)
 			}
 
 			log.Printf("Processed file %s: original size %s -> %s (%0.2f%% reduction)\n",
-				successful(filename),
+				successful(outputFile),
 				humanize.Bytes(uint64(header.Size)),
 				humanize.Bytes(uint64(newSize)),
 				100-float64(newSize)/float64(header.Size)*100)
@@ -89,18 +98,31 @@ func ExtractData(tarBz2File string) {
 	}
 }
 
-func reprocessFeatureCollection(fc *geojson.FeatureCollection) error {
+func extractFileType(header *tar.Header) (string, string) {
+	if header.Typeflag != tar.TypeReg {
+		return "", ""
+	} else if strings.HasPrefix(header.Name, "gb-postcodes-v5/units/") {
+		return "unit", "postcodes"
+	} else if strings.HasPrefix(header.Name, "gb-postcodes-v5/districts/") {
+		return "district", "district"
+	} else {
+		return "", ""
+	}
+}
+
+func reprocessFeatureCollection(fileType string, propName string, fc *geojson.FeatureCollection) error {
 
 	for _, feature := range fc.Features {
-		postcode, ok := feature.Properties["postcodes"].(string)
+		id, ok := feature.Properties[propName].(string)
 		if !ok {
-			return fmt.Errorf("missing or invalid 'postcodes' property in feature %s", feature.ID)
+			return fmt.Errorf("missing or invalid '%s' property for postcode %s: %s", propName, fileType, id)
 		}
 
+		feature.ID = id
+		feature.Properties["type"] = fileType
 		truncateCoordinates(feature)
 		delete(feature.Properties, "mapit_code")
-		delete(feature.Properties, "postcodes")
-		feature.Properties["postcode"] = postcode
+		delete(feature.Properties, propName)
 	}
 
 	return nil
