@@ -69,7 +69,7 @@ func TestSearchIter_InvalidBounds(t *testing.T) {
 	idx := &SpatialIndex{tree: &rtree.RTreeGN[uint32, string]{}}
 	err := idx.SearchIter([]uint32{1, 2, 3}, func([2]uint32, [2]uint32, string) bool { return true })
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "bounds must contain 4 values")
+	require.Contains(t, err.Error(), "bounds must contain exactly 4 values")
 }
 
 func TestLen(t *testing.T) {
