@@ -38,7 +38,7 @@ func TestNewCodePointSpatialIndex_Success(t *testing.T) {
 
 func TestNewCodePointSpatialIndex_BadZip(t *testing.T) {
 	_, err := NewCodePointSpatialIndex("/no/such/file.zip")
-	require.Error(t, err, "expected error for missing zip file")
+	require.Error(t, err, "failed to open zip file: file does not exist")
 }
 
 func TestSearch(t *testing.T) {
