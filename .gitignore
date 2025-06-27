@@ -33,3 +33,4 @@ go.work.sum
 
 data/
 __debug_bin*
+test-reports/
