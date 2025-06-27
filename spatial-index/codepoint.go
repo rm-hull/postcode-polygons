@@ -20,6 +20,19 @@ type SpatialIndex struct {
 	tree *rtree.RTreeGN[uint32, string]
 }
 
+func NewCodePointSpatialIndex(zipFile string) (*SpatialIndex, error) {
+	idx := SpatialIndex{
+		tree: &rtree.RTreeGN[uint32, string]{},
+	}
+
+	err := idx.importCodePoint(zipFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load codepoint index from zip file: %w", err)
+	}
+
+	return &idx, nil
+}
+
 func (idx *SpatialIndex) Search(bounds []uint32) (*[]CodePoint, error) {
 
 	results := make([]CodePoint, 0, 100)
@@ -49,19 +62,6 @@ func (idx *SpatialIndex) SearchIter(bounds []uint32, iter func(min, max [2]uint3
 
 	idx.tree.Search(sw, ne, iter)
 	return nil
-}
-
-func NewCodePointSpatialIndex(zipFile string) (*SpatialIndex, error) {
-	idx := SpatialIndex{
-		tree: &rtree.RTreeGN[uint32, string]{},
-	}
-
-	err := idx.importCodePoint(zipFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load codepoint index from zip file: %w", err)
-	}
-
-	return &idx, nil
 }
 
 func (idx *SpatialIndex) Len() int {
