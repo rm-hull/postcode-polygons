@@ -144,14 +144,15 @@ func TestPolygonSearch_InternalError(t *testing.T) {
 
 func TestParseBBox(t *testing.T) {
 	testCases := []struct {
-		name      string
-		bboxStr   string
-		expectErr bool
+		name        string
+		bboxStr     string
+		expectErr   bool
+		errContains string
 	}{
 		{name: "valid", bboxStr: "1,2,3,4", expectErr: false},
-		{name: "too few parts", bboxStr: "1,2,3", expectErr: true},
-		{name: "not numbers", bboxStr: "a,b,c,d", expectErr: true},
-		{name: "min greater than max", bboxStr: "4,3,2,1", expectErr: true},
+		{name: "too few parts", bboxStr: "1,2,3", expectErr: true, errContains: "bbox must have 4 comma-separated values"},
+		{name: "not numbers", bboxStr: "a,b,c,d", expectErr: true, errContains: "invalid bbox value"},
+		{name: "min greater than max", bboxStr: "4,3,2,1", expectErr: true, errContains: "invalid bbox: min values must be less than or equal to max values"},
 	}
 
 	for _, tc := range testCases {
@@ -159,6 +160,9 @@ func TestParseBBox(t *testing.T) {
 			_, err := parseBBox(tc.bboxStr)
 			if tc.expectErr {
 				require.Error(t, err)
+				if tc.errContains != "" {
+					require.Contains(t, err.Error(), tc.errContains)
+				}
 			} else {
 				require.NoError(t, err)
 			}
