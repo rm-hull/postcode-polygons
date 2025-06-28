@@ -37,7 +37,6 @@ func (m *mockSpatialIndex) Len() int {
 	return 0
 }
 
-// --- CodePointSearch tests ---
 func TestCodePointSearch_BadBBox(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
@@ -107,7 +106,6 @@ func TestCodePointSearch_Success(t *testing.T) {
 	require.Contains(t, w.Body.String(), "AB1 2CD")
 }
 
-// --- PolygonSearch tests ---
 func TestPolygonSearch_BadBBox(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
@@ -144,23 +142,43 @@ func TestPolygonSearch_InternalError(t *testing.T) {
 	require.Contains(t, w.Body.String(), "An internal server error occurred")
 }
 
-// --- parseBBox and isTooBig tests ---
 func TestParseBBox(t *testing.T) {
-	_, err := parseBBox("1,2,3,4")
-	require.NoError(t, err)
+	testCases := []struct {
+		name      string
+		bboxStr   string
+		expectErr bool
+	}{
+		{name: "valid", bboxStr: "1,2,3,4", expectErr: false},
+		{name: "too few parts", bboxStr: "1,2,3", expectErr: true},
+		{name: "not numbers", bboxStr: "a,b,c,d", expectErr: true},
+		{name: "min greater than max", bboxStr: "4,3,2,1", expectErr: true},
+	}
 
-	_, err = parseBBox("1,2,3")
-	require.Error(t, err)
-
-	_, err = parseBBox("a,b,c,d")
-	require.Error(t, err)
-
-	_, err = parseBBox("4,3,2,1")
-	require.Error(t, err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := parseBBox(tc.bboxStr)
+			if tc.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestIsTooBig(t *testing.T) {
-	require.False(t, isTooBig([]uint32{0, 0, 100, 100}))
-	require.True(t, isTooBig([]uint32{0, 0, 6000, 100}))
-	require.True(t, isTooBig([]uint32{0, 0, 100, 6000}))
+	testCases := []struct {
+		name     string
+		bbox     []uint32
+		expected bool
+	}{
+		{name: "not too big", bbox: []uint32{0, 0, 100, 100}, expected: false},
+		{name: "too wide", bbox: []uint32{0, 0, 6000, 100}, expected: true},
+		{name: "too high", bbox: []uint32{0, 0, 100, 6000}, expected: true},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, isTooBig(tc.bbox))
+		})
+	}
 }
