@@ -8,7 +8,7 @@ import (
 )
 
 type PolygonsRepo interface {
-	RetrieveFeatureCollection(postcodeType string, postcodeDistrict string) (*geojson.FeatureCollection, error)
+	RetrieveFeatureCollection(target string, district string) (*geojson.FeatureCollection, error)
 }
 
 type CachedPolygonsRepo struct {
