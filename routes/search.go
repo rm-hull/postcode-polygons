@@ -17,6 +17,8 @@ import (
 	"github.com/paulmach/orb/geojson"
 )
 
+const UNITS_BOUNDS_EXPANSION = 100
+
 type SearchResponse struct {
 	Results     []spatialindex.CodePoint `json:"results"`
 	Attribution []string                 `json:"attribution"`
@@ -63,7 +65,7 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex, cache *memoize.Memoi
 		target := map[bool]string{true: "districts", false: "units"}[tooBig]
 
 		if target == "units" {
-			expandBounds(&bbox, 100)
+			expandBounds(&bbox, UNITS_BOUNDS_EXPANSION)
 		}
 
 		requested := make(map[string]struct{}, 100)
@@ -114,12 +116,12 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex, cache *memoize.Memoi
 	}
 }
 
-func expandBounds(bbox *[]uint32, extendBy int) {
+func expandBounds(bbox *[]uint32, extendBy uint32) {
 	b := *bbox
-	b[0] = uint32(int(b[0]) - extendBy) // min_easting
-	b[1] = uint32(int(b[1]) - extendBy) // min_northing
-	b[2] = uint32(int(b[2]) + extendBy) // max_easting
-	b[3] = uint32(int(b[3]) + extendBy) // max_northing
+	b[0] -= extendBy // min_easting
+	b[1] -= extendBy // min_northing
+	b[2] += extendBy // max_easting
+	b[3] += extendBy // max_northing
 }
 
 func parseBBox(bboxStr string) ([]uint32, error) {
