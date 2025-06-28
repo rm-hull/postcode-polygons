@@ -26,7 +26,7 @@ type RtreeSpatialIndex struct {
 	tree *rtree.RTreeGN[uint32, string]
 }
 
-func NewCodePointSpatialIndex(zipFile string) (*RtreeSpatialIndex, error) {
+func NewCodePointSpatialIndex(zipFile string) (SpatialIndex, error) {
 	idx := RtreeSpatialIndex{
 		tree: &rtree.RTreeGN[uint32, string]{},
 	}
