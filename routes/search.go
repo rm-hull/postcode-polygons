@@ -62,6 +62,10 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex, cache *memoize.Memoi
 		tooBig := isTooBig(bbox)
 		target := map[bool]string{true: "districts", false: "units"}[tooBig]
 
+		if target == "units" {
+			expandBounds(&bbox, 100)
+		}
+
 		requested := make(map[string]struct{}, 100)
 		districts := make(map[string]struct{}, 20)
 
@@ -108,6 +112,14 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex, cache *memoize.Memoi
 		c.Header("Content-Type", "application/geo+json")
 		c.JSON(http.StatusOK, &fc)
 	}
+}
+
+func expandBounds(bbox *[]uint32, extendBy int) {
+	b := *bbox
+	b[0] = uint32(int(b[0]) - extendBy) // min_easting
+	b[1] = uint32(int(b[1]) - extendBy) // min_northing
+	b[2] = uint32(int(b[2]) + extendBy) // max_easting
+	b[3] = uint32(int(b[3]) + extendBy) // max_northing
 }
 
 func parseBBox(bboxStr string) ([]uint32, error) {
