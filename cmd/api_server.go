@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"postcode-polygons/internal"
 	"postcode-polygons/routes"
 	spatialindex "postcode-polygons/spatial-index"
 	"time"
@@ -61,9 +62,10 @@ func ApiServer(zipFile string, port int, debug bool) {
 	}
 
 	cache := memoize.NewMemoizer(5*time.Minute, 10*time.Minute)
-
+	repo := internal.NewPolygonsRepo(cache)
+	
 	r.GET("/v1/postcode/codepoints", routes.CodePointSearch(idx))
-	r.GET("/v1/postcode/polygons", routes.PolygonSearch(idx, cache))
+	r.GET("/v1/postcode/polygons", routes.PolygonSearch(idx, repo))
 
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Starting HTTP API Server on port %d...", port)

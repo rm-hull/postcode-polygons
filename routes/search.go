@@ -13,7 +13,6 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kofalt/go-memoize"
 	"github.com/paulmach/orb/geojson"
 )
 
@@ -53,7 +52,7 @@ func CodePointSearch(idx spatialindex.SpatialIndex) func(c *gin.Context) {
 	}
 }
 
-func PolygonSearch(idx spatialindex.SpatialIndex, cache *memoize.Memoizer) func(c *gin.Context) {
+func PolygonSearch(idx spatialindex.SpatialIndex, repo internal.PolygonsRepo) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		bbox, err := parseBBox(c.Query("bbox"))
 		if err != nil {
@@ -91,16 +90,14 @@ func PolygonSearch(idx spatialindex.SpatialIndex, cache *memoize.Memoizer) func(
 		fc.Features = make([]*geojson.Feature, 0, len(requested))
 
 		for district := range districts {
-			filename := fmt.Sprintf("./data/postcodes/%s/%s.geojson.bz2", target, district)
-			featureCollection, err, _ := memoize.Call(cache, filename, func() (*geojson.FeatureCollection, error) {
-				return internal.DecompressFeatureCollection(filename)
-			})
+
+			featureCollection, err := repo.RetrieveFeatureCollection(target, district)
 			if err != nil && os.IsNotExist(err) {
-				log.Printf("polygon file %s does not exist, skipping", filename)
+				log.Printf("polygon file for district %s does not exist, skipping", district)
 				continue
 			}
 			if err != nil {
-				log.Printf("error loading feature collection from file %s: %v", filename, err)
+				log.Printf("error loading feature collection for district %s: %v", district, err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
 				return
 			}
