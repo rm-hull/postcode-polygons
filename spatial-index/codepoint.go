@@ -16,12 +16,18 @@ type CodePoint struct {
 	Northing uint32 `json:"northing"`
 }
 
-type SpatialIndex struct {
+type SpatialIndex interface {
+	Search(bounds []uint32) (*[]CodePoint, error)
+	SearchIter(bounds []uint32, iter func(min, max [2]uint32, data string) bool) error
+	Len() int
+}
+
+type RtreeSpatialIndex struct {
 	tree *rtree.RTreeGN[uint32, string]
 }
 
-func NewCodePointSpatialIndex(zipFile string) (*SpatialIndex, error) {
-	idx := SpatialIndex{
+func NewCodePointSpatialIndex(zipFile string) (SpatialIndex, error) {
+	idx := RtreeSpatialIndex{
 		tree: &rtree.RTreeGN[uint32, string]{},
 	}
 
@@ -33,7 +39,7 @@ func NewCodePointSpatialIndex(zipFile string) (*SpatialIndex, error) {
 	return &idx, nil
 }
 
-func (idx *SpatialIndex) Search(bounds []uint32) (*[]CodePoint, error) {
+func (idx *RtreeSpatialIndex) Search(bounds []uint32) (*[]CodePoint, error) {
 
 	results := make([]CodePoint, 0, 100)
 	err := idx.SearchIter(bounds, func(min, max [2]uint32, data string) bool {
@@ -52,7 +58,7 @@ func (idx *SpatialIndex) Search(bounds []uint32) (*[]CodePoint, error) {
 	return &results, nil
 }
 
-func (idx *SpatialIndex) SearchIter(bounds []uint32, iter func(min, max [2]uint32, data string) bool) error {
+func (idx *RtreeSpatialIndex) SearchIter(bounds []uint32, iter func(min, max [2]uint32, data string) bool) error {
 	if len(bounds) != 4 {
 		return fmt.Errorf("search bounds must contain exactly 4 values: min_easting, min_northing, max_easting, max_northing")
 	}
@@ -64,11 +70,11 @@ func (idx *SpatialIndex) SearchIter(bounds []uint32, iter func(min, max [2]uint3
 	return nil
 }
 
-func (idx *SpatialIndex) Len() int {
+func (idx *RtreeSpatialIndex) Len() int {
 	return idx.tree.Len()
 }
 
-func (idx *SpatialIndex) importCodePoint(zipPath string) error {
+func (idx *RtreeSpatialIndex) importCodePoint(zipPath string) error {
 
 	r, err := zip.OpenReader(zipPath)
 	if err != nil {
@@ -92,7 +98,7 @@ func (idx *SpatialIndex) importCodePoint(zipPath string) error {
 	return nil
 }
 
-func (idx *SpatialIndex) processCSV(f *zip.File) error {
+func (idx *RtreeSpatialIndex) processCSV(f *zip.File) error {
 	r, err := f.Open()
 	if err != nil {
 		return fmt.Errorf("failed to open embedded file %s in zip: %w", f.Name, err)

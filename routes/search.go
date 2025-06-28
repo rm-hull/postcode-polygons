@@ -17,6 +17,8 @@ import (
 	"github.com/paulmach/orb/geojson"
 )
 
+const UNITS_BOUNDS_EXPANSION = 100
+
 type SearchResponse struct {
 	Results     []spatialindex.CodePoint `json:"results"`
 	Attribution []string                 `json:"attribution"`
@@ -24,7 +26,7 @@ type SearchResponse struct {
 
 const MAX_BOUNDS = 5000 // Maximum bounds in meters (5 KM)
 
-func CodePointSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Context) {
+func CodePointSearch(idx spatialindex.SpatialIndex) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		bbox, err := parseBBox(c.Query("bbox"))
 		if err != nil {
@@ -37,7 +39,7 @@ func CodePointSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Contex
 			return
 		}
 
-		results, err := spatialIndex.Search(bbox)
+		results, err := idx.Search(bbox)
 		if err != nil {
 			log.Printf("error while fetching postcode data: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "An internal server error occurred"})
@@ -51,7 +53,7 @@ func CodePointSearch(spatialIndex *spatialindex.SpatialIndex) func(c *gin.Contex
 	}
 }
 
-func PolygonSearch(spatialIndex *spatialindex.SpatialIndex, cache *memoize.Memoizer) func(c *gin.Context) {
+func PolygonSearch(idx spatialindex.SpatialIndex, cache *memoize.Memoizer) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		bbox, err := parseBBox(c.Query("bbox"))
 		if err != nil {
@@ -62,10 +64,14 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex, cache *memoize.Memoi
 		tooBig := isTooBig(bbox)
 		target := map[bool]string{true: "districts", false: "units"}[tooBig]
 
+		if target == "units" {
+			expandBounds(&bbox, UNITS_BOUNDS_EXPANSION)
+		}
+
 		requested := make(map[string]struct{}, 100)
 		districts := make(map[string]struct{}, 20)
 
-		err = spatialIndex.SearchIter(bbox, func(min, max [2]uint32, postcode string) bool {
+		err = idx.SearchIter(bbox, func(min, max [2]uint32, postcode string) bool {
 			district := strings.Split(postcode, " ")[0] // Take the first part of the postcode
 			districts[district] = struct{}{}
 			if tooBig {
@@ -108,6 +114,14 @@ func PolygonSearch(spatialIndex *spatialindex.SpatialIndex, cache *memoize.Memoi
 		c.Header("Content-Type", "application/geo+json")
 		c.JSON(http.StatusOK, &fc)
 	}
+}
+
+func expandBounds(bbox *[]uint32, extendBy uint32) {
+	b := *bbox
+	b[0] -= extendBy // min_easting
+	b[1] -= extendBy // min_northing
+	b[2] += extendBy // max_easting
+	b[3] += extendBy // max_northing
 }
 
 func parseBBox(bboxStr string) ([]uint32, error) {
