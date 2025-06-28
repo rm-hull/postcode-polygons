@@ -27,11 +27,11 @@ func ApiServer(zipFile string, port int, debug bool) {
 	}
 
 	log.Printf("Loading CodePoint data from: %s", zipFile)
-	spatialIndex, err := spatialindex.NewCodePointSpatialIndex(zipFile)
+	idx, err := spatialindex.NewCodePointSpatialIndex(zipFile)
 	if err != nil {
 		log.Fatalf("failed to create spatial index: %v", err)
 	}
-	log.Printf("CodePoint spatial index created with %d entries", spatialIndex.Len())
+	log.Printf("CodePoint spatial index created with %d entries", idx.Len())
 
 	r := gin.New()
 
@@ -62,8 +62,8 @@ func ApiServer(zipFile string, port int, debug bool) {
 
 	cache := memoize.NewMemoizer(5*time.Minute, 10*time.Minute)
 
-	r.GET("/v1/postcode/codepoints", routes.CodePointSearch(spatialIndex))
-	r.GET("/v1/postcode/polygons", routes.PolygonSearch(spatialIndex, cache))
+	r.GET("/v1/postcode/codepoints", routes.CodePointSearch(idx))
+	r.GET("/v1/postcode/polygons", routes.PolygonSearch(idx, cache))
 
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Starting HTTP API Server on port %d...", port)
