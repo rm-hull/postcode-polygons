@@ -12,7 +12,7 @@ require (
 	github.com/paulmach/orb v0.11.1
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	github.com/tavsec/gin-healthcheck v1.7.8
+	github.com/tavsec/gin-healthcheck v1.7.9
 	go.eigsys.de/gin-cachecontrol/v2 v2.3.0
 )
 
@@ -65,7 +65,7 @@ require (
 	golang.org/x/arch v0.18.0 // indirect
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
