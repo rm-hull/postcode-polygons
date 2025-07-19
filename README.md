@@ -62,7 +62,7 @@ Flags:
       --port int           Port to run HTTP server on (default 8080)
 ```
 
-### API Endpoints
+#### API Endpoints
 
 -   `GET /v1/postcode/codepoints?bbox=<min_easting,min_northing,max_easting,max_northing>` returns a list of codepoints bound by the eastings/northings region.
 -   `GET /v1/postcode/polygons?bbox=<min_easting,min_northing,max_easting,max_northing>` returns a [GeoJSON](https://geojson.org/) structure representing the postcode polygons that have codepoints inside the bounding box represented by the eastings/northings region.
