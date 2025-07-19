@@ -13,49 +13,104 @@ A high-performance Go API for spatial search and retrieval of UK postcode polygo
 
 ## Example Usage
 
-### Data Extraction
+Use the `--help` flag to show what commands are available:
 
-Download the NSUL polygons archive and extract/reprocess the data:
+```console
+$ go run main.go --help
+HTTP server & data extraction
 
-```bash
-curl https://postcodes-mapit-static.s3.eu-west-2.amazonaws.com/data/gb-postcodes-v5.tar.bz2 -o data/gb-postcodes-v5.tar.bz2
-go run main.go extract-data
+Usage:
+  postcode-polygons [command]
+
+Available Commands:
+  api-server   Start HTTP API server
+  completion   Generate the autocompletion script for the specified shell
+  extract-data Extract NSUL polygons
+  help         Help about any command
+
+Flags:
+  -h, --help   help for postcode-polygons
+
+Use "postcode-polygons [command] --help" for more information about a command.
 ```
-
-This will regenerate the data files under `./data/postcodes`.
 
 ### Starting the API Server
 
-```bash
-go run main.go api-server
+```console
+$ go run main.go api-server
 ```
 
 Or with custom options:
 
-```bash
-go run main.go api-server --codepoint ./data/codepo_gb.zip --port 8080 --debug
+```console
+$ go run main.go api-server --codepoint ./data/codepo_gb.zip --port 8080 --debug
+```
+
+Use the `--help` flag with the **api-server** command to see what options are available:
+
+```console
+$ go run main.go api-server --help
+Start HTTP API server
+
+Usage:
+  postcode-polygons api-server [--codepoint <path>] [--port <port>] [--debug] [flags]
+
+Flags:
+      --codepoint string   Path to CodePoint Open zip file (default "./data/codepo_gb.zip")
+      --debug              Enable debugging (pprof) - WARING: do not enable in production
+  -h, --help               help for api-server
+      --port int           Port to run HTTP server on (default 8080)
 ```
 
 ### API Endpoints
 
--   `GET /v1/postcode/codepoints?bbox=<min_easting,min_northing,max_easting,max_northing>`
--   `GET /v1/postcode/polygons?bbox=<min_easting,min_northing,max_easting,max_northing>`
+-   `GET /v1/postcode/codepoints?bbox=<min_easting,min_northing,max_easting,max_northing>` returns a list of codepoints bound by the eastings/northings region.
+-   `GET /v1/postcode/polygons?bbox=<min_easting,min_northing,max_easting,max_northing>` returns a [GeoJSON](https://geojson.org/) structure representing the postcode polygons that have codepoints inside the bounding box represented by the eastings/northings region.
+
+### Regenerating Postcode Data (optional)
+
+**NOTE:** this is not required for standard setup, only if you wish to regenerate the polygon data.
+
+Download the NSUL polygons archive and extract/reprocess the data:
+
+```console
+$ mkdir data
+$ curl https://postcodes-mapit-static.s3.eu-west-2.amazonaws.com/data/gb-postcodes-v5.tar.bz2 -o data/gb-postcodes-v5.tar.bz2
+$ go run main.go extract-data
+```
+
+This will regenerate the data files under `./data/postcodes`.
+
+Use the `--help` flag with the **extract-data** command to see what options are available:
+
+```console
+$ go run main.go extract-data --help
+Extract NSUL polygons
+
+Usage:
+  postcode-polygons extract-data [--polygon <path>] [flags]
+
+Flags:
+  -h, --help             help for extract-data
+      --polygon string   Path to NSUL polygons tar.bz2 file (default "./data/gb-postcodes-v5.tar.bz2")
+```
 
 ## Architecture Overview
 
 ### High-Level Flow
 
+#### API Server
+
 ```mermaid
 graph TD
-    A[Client] -->|HTTP Request| B[API Server (Gin)]
-    B -->|/v1/postcode/codepoints| C[Spatial Index (R-tree)]
-    B -->|/v1/postcode/polygons| D[Polygons Repo (Memoized)]
+    A[Client] -->|HTTP Request| B[API Server]
+    B -->|/v1/postcode/codepoints| C[R-Tree Spatial Index]
+    B -->|/v1/postcode/polygons| D[Polygons Repo]
     C -->|Search| E[CodePoint Data]
     D -->|Retrieve| F[GeoJSON Polygons]
-    F -->|Serve| A
 ```
 
-### Data Extraction
+#### Data Extraction
 
 ```mermaid
 flowchart TD
@@ -77,7 +132,12 @@ flowchart TD
 ### Prerequisites
 
 -   Go 1.24+
--   Data files: `data/codepo_gb.zip`, `data/postcodes/units/`, `data/postcodes/districts/`
+-   Data files (all these locations are checked into the git repo):
+    - `data/codepo_gb.zip`,
+    - `data/postcodes/units/`,
+    - `data/postcodes/districts/`
+
+Note that `codepo_gb.zip` was originally sourced from https://www.ordnancesurvey.co.uk/products/code-point-open, and will be periodically synced into this repo.
 
 ### Running Locally
 
@@ -121,5 +181,5 @@ Test coverage and reports are generated in `test-reports/`.
 
 ## License & Attribution
 
-MIT License. See `LICENSE.md` and `ATTRIBUTION.md` for further details.
+See `LICENSE.md` and `ATTRIBUTION.md` for further details.
 
