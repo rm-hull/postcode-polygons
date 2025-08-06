@@ -12,7 +12,7 @@ require (
 	github.com/paulmach/orb v0.11.1
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	github.com/tavsec/gin-healthcheck v1.7.9
+	github.com/tavsec/gin-healthcheck v1.7.10
 	go.eigsys.de/gin-cachecontrol/v2 v2.3.0
 )
 
@@ -53,7 +53,7 @@ require (
 	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
-	github.com/redis/go-redis/v9 v9.11.0 // indirect
+	github.com/redis/go-redis/v9 v9.12.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/tidwall/geoindex v1.7.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
