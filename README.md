@@ -131,7 +131,7 @@ flowchart TD
 
 ### Prerequisites
 
--   Go 1.24+
+-   Go 1.25+
 -   Data files (all these locations are checked into the git repo):
     - `data/codepo_gb.zip`,
     - `data/postcodes/units/`,
