@@ -10,7 +10,11 @@
             "request": "launch",
             "mode": "auto",
             "program": "main.go",
-            "args": ["api-server"]
+            "args": [
+                "api-server",
+                "--codepoint",
+                "https://api.os.uk/downloads/v1/products/CodePointOpen/downloads?area=GB&format=CSV&redirect"
+            ]
         },
         {
             "name": "Launch data extraction",
