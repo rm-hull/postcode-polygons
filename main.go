@@ -28,7 +28,7 @@ func main() {
 	}
 	apiServerCmd.Flags().StringVar(&codePointZipFile, "codepoint",
 		"https://api.os.uk/downloads/v1/products/CodePointOpen/downloads?area=GB&format=CSV&redirect",
-		"Path to CodePoint Open zip file")
+		"Path or URL to CodePoint Open zip file")
 	apiServerCmd.Flags().IntVar(&port, "port", 8080, "Port to run HTTP server on")
 	apiServerCmd.Flags().BoolVar(&debug, "debug", false, "Enable debugging (pprof) - WARING: do not enable in production")
 
