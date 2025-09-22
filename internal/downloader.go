@@ -81,7 +81,9 @@ func TransientDownload[T any](uri string, handler func(tmpfile string) (T, error
 	}()
 
 	if _, err := io.Copy(tmp, resp.Body); err != nil {
-		_ = tmp.Close()
+		if closeErr := tmp.Close(); closeErr != nil {
+			log.Printf("error closing temp file after copy failure: %v", closeErr)
+		}
 		return zero, fmt.Errorf("failed to copy response body: %w", err)
 	}
 
