@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
+	"net/http"
 	"postcode-polygons/internal"
 	"postcode-polygons/routes"
 	spatialindex "postcode-polygons/spatial-index"
@@ -23,12 +23,7 @@ import (
 )
 
 func ApiServer(zipFile string, port int, debug bool) {
-	if _, err := os.Stat(zipFile); os.IsNotExist(err) {
-		log.Fatalf("CodePoint zip file does not exist: %s", zipFile)
-	}
-
-	log.Printf("Loading CodePoint data from: %s", zipFile)
-	idx, err := spatialindex.NewCodePointSpatialIndex(zipFile)
+	idx, err := internal.TransientDownload(zipFile, spatialindex.NewCodePointSpatialIndex)
 	if err != nil {
 		log.Fatalf("failed to create spatial index: %v", err)
 	}
@@ -63,12 +58,13 @@ func ApiServer(zipFile string, port int, debug bool) {
 
 	cache := memoize.NewMemoizer(5*time.Minute, 10*time.Minute)
 	repo := internal.NewPolygonsRepo(cache)
-	
+
 	r.GET("/v1/postcode/codepoints", routes.CodePointSearch(idx))
 	r.GET("/v1/postcode/polygons", routes.PolygonSearch(idx, repo))
 
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Starting HTTP API Server on port %d...", port)
-	err = r.Run(addr)
-	log.Fatalf("HTTP API Server failed to start on port %d: %v", port, err)
+	if err := r.Run(addr); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("HTTP API Server failed to start on port %d: %v", port, err)
+	}
 }
