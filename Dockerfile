@@ -1,7 +1,7 @@
 FROM golang:1.25-alpine AS build
 
 RUN apk update && \
-    apk add --no-cache ca-certificates tzdata git && \
+    apk add --no-cache ca-certificates tzdata git curl && \
     update-ca-certificates
 
 RUN adduser -D -g '' appuser
@@ -16,6 +16,7 @@ COPY . .
 ENV GOOS=linux
 
 RUN go build -tags=jsoniter -ldflags="-w -s" -o postcode-polygons .
+RUN curl "https://api.os.uk/downloads/v1/products/CodePointOpen/downloads?area=GB&format=CSV&redirect" -Lo /app/data/codepo_gb.zip
 
 FROM alpine:latest AS runtime
 ENV GIN_MODE=release
@@ -27,9 +28,9 @@ RUN apk --no-cache add curl ca-certificates tzdata && \
 RUN adduser -D -g '' appuser
 WORKDIR /app
 
-COPY ./data/codepo_gb.zip /app/data/codepo_gb.zip
 COPY ./data/postcodes /app/data/postcodes
 COPY --from=build /app/postcode-polygons .
+COPY --from=build /app/data/codepo_gb.zip /app/data/codepo_gb.zip
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 
