@@ -115,7 +115,7 @@ func (idx *RtreeSpatialIndex) processCSV(f *zip.File) error {
 			return fmt.Errorf("error parsing line %d: %w", result.LineNum, result.Error)
 		}
 
-		point := [2]uint32{uint32(result.Value.Easting), uint32(result.Value.Northing)}
+		point := [2]uint32{result.Value.Easting, result.Value.Northing}
 		idx.tree.Insert(point, point, result.Value.PostCode)
 	}
 
