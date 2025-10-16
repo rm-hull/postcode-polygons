@@ -13,7 +13,7 @@ require (
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
 	github.com/tavsec/gin-healthcheck v1.7.10
-	go.eigsys.de/gin-cachecontrol/v2 v2.3.0
+	go.eigsys.de/gin-cachecontrol/v2 v2.4.0
 )
 
 require (
@@ -55,7 +55,7 @@ require (
 	github.com/prometheus/common v0.66.1 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
-	github.com/quic-go/quic-go v0.54.0 // indirect
+	github.com/quic-go/quic-go v0.54.1 // indirect
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/redis/go-redis/v9 v9.14.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
