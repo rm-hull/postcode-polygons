@@ -10,7 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/json-iterator/go v1.1.12
 	github.com/paulmach/orb v0.12.0
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	github.com/tavsec/gin-healthcheck v1.7.12
 	go.eigsys.de/gin-cachecontrol/v2 v2.4.0
