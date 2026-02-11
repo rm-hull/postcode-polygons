@@ -1,6 +1,6 @@
 module postcode-polygons
 
-go 1.25
+go 1.26
 
 require (
 	github.com/Depado/ginprom v1.8.2
